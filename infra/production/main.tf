@@ -264,6 +264,10 @@ resource "aws_ecs_task_definition" "task" {
         {
           name  = "DYNAMODB_ENDPOINT"
           value = "https://dynamodb.us-east-1.amazonaws.com"
+        },
+        {
+          name  = "GIN_MODE"
+          value = "release"
         }
       ]
 

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"speakeasy/internal/app"
 	"speakeasy/internal/pkg/authentication"
@@ -18,8 +17,6 @@ import (
 
 func main() {
 	godotenv.Load()
-
-	fmt.Println(os.Environ())
 
 	router := gin.Default()
 	router.Use(cors.Default())
