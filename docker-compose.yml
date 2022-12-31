@@ -1,0 +1,29 @@
+version: '3.4'
+
+services:
+  dynamodb-local:
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
+    image: "amazon/dynamodb-local:latest"
+    container_name: dynamodb-local
+    ports:
+      - "8000:8000"
+    volumes:
+      - "./docker/dynamodb:/home/dynamodblocal/data"
+    working_dir: /home/dynamodblocal
+
+  golangsocial:
+    image: golangsocial
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 8080:8080
+    depends_on:
+      - "dynamodb-local"
+
+    environment:
+      AWS_ACCESS_KEY_ID: 'local'
+      AWS_SECRET_ACCESS_KEY: 'local'
+      AWS_REGION: 'us-east-1'
+      DYNAMODB_ENDPOINT: 'http://dynamodb-local:8000'
+      JWT_SECRET: 'prl@+_rAwrlmLd_rEseKAjOb-NL+=PofIF6*VU-RlJ-D6_BeCap7StA0IhabrEN&'

@@ -1,0 +1,11 @@
+# macOS
+.DS_Store
+/bin/
+
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/.terraform/
+
+**/shared-local-instance.db
+
+.env
