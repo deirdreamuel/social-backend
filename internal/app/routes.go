@@ -2,20 +2,14 @@ package app
 
 import "github.com/gin-gonic/gin"
 
+// Routes Gin function which contains api routes
 func (s *Server) Routes() *gin.Engine {
 	router := s.router
 
 	// version 1 apis
 	v1 := router.Group("/v1")
 	{
-		v1.GET("/status", s.ApiStatus())
-
-		// prefix the user routes
-		// user := v1.Group("/profile")
-		// {
-		// 	user.POST("", s.PutProfile())
-		// 	user.GET("", s.ReadProfile())
-		// }
+		v1.GET("/health", s.HealthCheck())
 
 		auth := v1.Group("/auth")
 		{

@@ -1,8 +1,9 @@
 package main
 
 import (
+	"os"
+
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 
@@ -11,35 +12,32 @@ import (
 )
 
 func main() {
-	// Initialize a session that the SDK will use to load
-	// credentials from the shared credentials file ~/.aws/credentials
-	// and region from the shared configuration file ~/.aws/config.
+	// https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html#specifying-credentials
+	// Initialize session and config for initializing client
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 
-	creds := credentials.NewStaticCredentials("123", "123", "")
-	region := "us-east-1"
-	endpoint := "http://127.0.0.1:8000"
-	awsConfig := &aws.Config{
-		Credentials: creds,
-		Region:      &region,
-		Endpoint:    &endpoint,
+	region := os.Getenv("AWS_REGION")
+	endpoint := os.Getenv("DYNAMODB_ENDPOINT")
+
+	cfg := &aws.Config{
+		Region:   &region,
+		Endpoint: &endpoint,
 	}
-
 	// Create DynamoDB client
-	svc := dynamodb.New(sess, awsConfig)
+	svc := dynamodb.New(sess, cfg)
 
-	if err := CreateAuthenticationTable(svc); err != nil {
+	if err := createAuthenticationTable(svc); err != nil {
 		log.Fatalf("Got error calling CreateAuthenticationTable: %s", err)
 	}
 
-	if err := CreateProfileTable(svc); err != nil {
+	if err := createProfileTable(svc); err != nil {
 		log.Fatalf("Got error calling CreateProfileTable: %s", err)
 	}
 }
 
-func CreateAuthenticationTable(ddb *dynamodb.DynamoDB) error {
+func createAuthenticationTable(ddb *dynamodb.DynamoDB) error {
 	tableName := "Authentication"
 
 	input := &dynamodb.CreateTableInput{
@@ -72,7 +70,7 @@ func CreateAuthenticationTable(ddb *dynamodb.DynamoDB) error {
 	return nil
 }
 
-func CreateProfileTable(svc *dynamodb.DynamoDB) error {
+func createProfileTable(svc *dynamodb.DynamoDB) error {
 	tableName := "Profile"
 
 	input := &dynamodb.CreateTableInput{

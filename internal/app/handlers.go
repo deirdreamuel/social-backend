@@ -7,69 +7,21 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (s *Server) ApiStatus() gin.HandlerFunc {
+// HealthCheck Gin handler function to check api health
+func (s *Server) HealthCheck() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Header("Content-Type", "application/json")
 
 		response := map[string]any{
 			"status":  http.StatusOK,
-			"message": "status check successful",
+			"message": "health check successful",
 		}
 
 		c.JSON(http.StatusOK, response)
 	}
 }
 
-// func (s *Server) PutProfile() gin.HandlerFunc {
-// 	return func(c *gin.Context) {
-// 		c.Header("Content-Type", "application/json")
-
-// 		// read and validate request body
-// 		var request profile.Profile
-// 		if err := c.Bind(&request); err != nil {
-// 			response := map[string]any{
-// 				"status":  http.StatusBadRequest,
-// 				"message": fmt.Sprintf("Error: %s", err),
-// 			}
-
-// 			c.JSON(http.StatusBadRequest, response)
-// 			return
-// 		}
-
-// 		// put profile request
-// 		err := s.profileService.PutProfile(request)
-// 		if err != nil {
-// 			response := map[string]any{
-// 				"status":  http.StatusBadRequest,
-// 				"message": fmt.Sprintf("Error: %s", err),
-// 			}
-
-// 			c.JSON(http.StatusBadRequest, response)
-// 			return
-// 		}
-
-// 		response := map[string]any{
-// 			"status":  http.StatusOK,
-// 			"message": "profile created",
-// 		}
-
-// 		c.JSON(http.StatusOK, response)
-// 	}
-// }
-
-// func (s *Server) ReadProfile() gin.HandlerFunc {
-// 	return func(c *gin.Context) {
-// 		c.Header("Content-Type", "application/json")
-
-// 		response := map[string]any{
-// 			"status":  http.StatusOK,
-// 			"message": "profile read successfully",
-// 		}
-
-// 		c.JSON(http.StatusOK, response)
-// 	}
-// }
-
+// Login Gin handler function to login and get access token
 func (s *Server) Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Header("Content-Type", "application/json")
@@ -101,6 +53,7 @@ func (s *Server) Login() gin.HandlerFunc {
 	}
 }
 
+// Signup Gin handler function to signup user
 func (s *Server) Signup() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Header("Content-Type", "application/json")

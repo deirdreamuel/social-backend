@@ -1,6 +1,7 @@
 package authentication
 
-type AuthenticationError struct {
+// Error object for authentication
+type Error struct {
 	Code   int
 	Reason string
 }

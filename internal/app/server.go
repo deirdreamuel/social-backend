@@ -7,14 +7,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Server object which contains router and services
 type Server struct {
 	router                *gin.Engine
-	authenticationService authentication.AuthenticationService
+	authenticationService authentication.Service
 }
 
+// NewServer returns Server object
 func NewServer(
 	router *gin.Engine,
-	authenticationService authentication.AuthenticationService,
+	authenticationService authentication.Service,
 ) *Server {
 	return &Server{
 		router:                router,
@@ -22,6 +24,7 @@ func NewServer(
 	}
 }
 
+// Run function to run server
 func (s *Server) Run() error {
 	r := s.Routes()
 	err := r.Run()

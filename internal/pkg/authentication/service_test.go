@@ -10,55 +10,55 @@ import (
 )
 
 // Mock DatabaseService where item exists
-type _DatabaseServiceMock_ItemExists struct {
-	database.DatabaseService[Authentication]
+type _DatabaseServiceMockItemExists struct {
+	database.Service[Authentication]
 }
 
-func (db *_DatabaseServiceMock_ItemExists) Read(keyObj interface{}) (*Authentication, error) {
+func (db *_DatabaseServiceMockItemExists) Read(keyObj interface{}) (*Authentication, error) {
 	hash, _ := bcrypt.GenerateFromPassword([]byte("correct.password"), bcrypt.DefaultCost)
 	return &Authentication{Password: string(hash)}, nil
 }
 
-func (db *_DatabaseServiceMock_ItemExists) Write(obj Authentication) error {
+func (db *_DatabaseServiceMockItemExists) Write(obj Authentication) error {
 	return nil
 }
 
 // Mock DatabaseService where .Read returns an error
-type _DatabaseServiceMock_ReadError struct {
-	database.DatabaseService[Authentication]
+type _DatabaseServiceMockReadError struct {
+	database.Service[Authentication]
 }
 
-func (db *_DatabaseServiceMock_ReadError) Read(keyObj interface{}) (*Authentication, error) {
+func (db *_DatabaseServiceMockReadError) Read(keyObj interface{}) (*Authentication, error) {
 	return nil, errors.New("ERROR")
 }
 
-func (db *_DatabaseServiceMock_ReadError) Write(obj Authentication) error {
+func (db *_DatabaseServiceMockReadError) Write(obj Authentication) error {
 	return nil
 }
 
 // Mock DatabaseService where .Write returns an error
-type _DatabaseServiceMock_WriteError struct {
-	database.DatabaseService[Authentication]
+type _DatabaseServiceMockWriteError struct {
+	database.Service[Authentication]
 }
 
-func (db *_DatabaseServiceMock_WriteError) Read(keyObj interface{}) (*Authentication, error) {
+func (db *_DatabaseServiceMockWriteError) Read(keyObj interface{}) (*Authentication, error) {
 	return nil, nil
 }
 
-func (db *_DatabaseServiceMock_WriteError) Write(obj Authentication) error {
+func (db *_DatabaseServiceMockWriteError) Write(obj Authentication) error {
 	return errors.New("ERROR")
 }
 
 // Mock DatabaseService where item does not exist
-type _DatabaseServiceMock_ItemNotFound struct {
-	database.DatabaseService[Authentication]
+type _DatabaseServiceMockItemNotFound struct {
+	database.Service[Authentication]
 }
 
-func (db *_DatabaseServiceMock_ItemNotFound) Read(keyObj interface{}) (*Authentication, error) {
+func (db *_DatabaseServiceMockItemNotFound) Read(keyObj interface{}) (*Authentication, error) {
 	return nil, nil
 }
 
-func (db *_DatabaseServiceMock_ItemNotFound) Write(obj Authentication) error {
+func (db *_DatabaseServiceMockItemNotFound) Write(obj Authentication) error {
 	return nil
 }
 
@@ -72,7 +72,7 @@ func TestNewAuthenticationService(t *testing.T) {
 
 func TestLogin(t *testing.T) {
 	t.Run("SUCCESS: RETURN JWT WHEN USER PASSWORD IS CORRECT", func(t *testing.T) {
-		svc := &_AuthenticationService{db: &_DatabaseServiceMock_ItemExists{}}
+		svc := &_Service{db: &_DatabaseServiceMockItemExists{}}
 
 		result, err := svc.Login(LoginRequest{
 			Email:    "user@email.com",
@@ -84,7 +84,7 @@ func TestLogin(t *testing.T) {
 	})
 
 	t.Run("ERROR: RETURN 401 WHEN USER PASSWORD IS INCORRECT", func(t *testing.T) {
-		svc := &_AuthenticationService{db: &_DatabaseServiceMock_ItemExists{}}
+		svc := &_Service{db: &_DatabaseServiceMockItemExists{}}
 
 		result, err := svc.Login(LoginRequest{
 			Email:    "user@email.com",
@@ -96,7 +96,7 @@ func TestLogin(t *testing.T) {
 	})
 
 	t.Run("ERROR: RETURN 401 WHEN USER DOES NOT EXIST", func(t *testing.T) {
-		svc := &_AuthenticationService{db: &_DatabaseServiceMock_ItemNotFound{}}
+		svc := &_Service{db: &_DatabaseServiceMockItemNotFound{}}
 
 		result, err := svc.Login(LoginRequest{
 			Email:    "user@email.com",
@@ -108,7 +108,7 @@ func TestLogin(t *testing.T) {
 	})
 
 	t.Run("ERROR: RETURN 503 WHEN DB RETURNS ERROR", func(t *testing.T) {
-		svc := &_AuthenticationService{db: &_DatabaseServiceMock_ReadError{}}
+		svc := &_Service{db: &_DatabaseServiceMockReadError{}}
 
 		result, err := svc.Login(LoginRequest{
 			Email:    "user@email.com",
@@ -122,7 +122,7 @@ func TestLogin(t *testing.T) {
 
 func TestSignup(t *testing.T) {
 	t.Run("SUCCESS: RETURN CREATED MESSAGE WHEN ITEM NOT FOUND", func(t *testing.T) {
-		svc := &_AuthenticationService{db: &_DatabaseServiceMock_ItemNotFound{}}
+		svc := &_Service{db: &_DatabaseServiceMockItemNotFound{}}
 		result, err := svc.Signup(SignupRequest{
 			Email:    "user@email.com",
 			Password: "correct.password",
@@ -135,7 +135,7 @@ func TestSignup(t *testing.T) {
 	})
 
 	t.Run("ERROR: RETURN 400 ERROR WHEN ITEM EXISTS", func(t *testing.T) {
-		svc := &_AuthenticationService{db: &_DatabaseServiceMock_ItemExists{}}
+		svc := &_Service{db: &_DatabaseServiceMockItemExists{}}
 		result, err := svc.Signup(SignupRequest{
 			Email:    "user@email.com",
 			Password: "correct.password",
@@ -148,7 +148,7 @@ func TestSignup(t *testing.T) {
 	})
 
 	t.Run("ERROR: RETURN 503 WHEN DB READ RETURNS ERROR", func(t *testing.T) {
-		svc := &_AuthenticationService{db: &_DatabaseServiceMock_ReadError{}}
+		svc := &_Service{db: &_DatabaseServiceMockReadError{}}
 
 		result, err := svc.Signup(SignupRequest{
 			Email:    "user@email.com",
@@ -162,7 +162,7 @@ func TestSignup(t *testing.T) {
 	})
 
 	t.Run("ERROR: RETURN 503 WHEN DB WRITE RETURNS ERROR", func(t *testing.T) {
-		svc := &_AuthenticationService{db: &_DatabaseServiceMock_WriteError{}}
+		svc := &_Service{db: &_DatabaseServiceMockWriteError{}}
 
 		result, err := svc.Signup(SignupRequest{
 			Email:    "user@email.com",

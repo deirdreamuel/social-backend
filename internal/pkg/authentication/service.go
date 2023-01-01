@@ -14,25 +14,27 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type _AuthenticationService struct {
-	db database.DatabaseService[Authentication]
+type _Service struct {
+	db database.Service[Authentication]
 }
 
-func NewAuthenticationService() AuthenticationService {
+// NewAuthenticationService returns _AuthenticationService object
+func NewAuthenticationService() Service {
 	db := database.NewDatabaseService[Authentication]("Authentication")
 
-	return &_AuthenticationService{
+	return &_Service{
 		db,
 	}
 }
 
-type AuthenticationService interface {
-	Login(request LoginRequest) (LoginResponse, *AuthenticationError)
-	Signup(request SignupRequest) (SignupReponse, *AuthenticationError)
+// Service interface which contains authentication operations
+type Service interface {
+	Login(request LoginRequest) (*LoginResponse, *Error)
+	Signup(request SignupRequest) (*SignupReponse, *Error)
 }
 
-// Get dynamodb item with user credentials
-func (service *_AuthenticationService) Login(request LoginRequest) (LoginResponse, *AuthenticationError) {
+// Login function to get access token
+func (service *_Service) Login(request LoginRequest) (*LoginResponse, *Error) {
 	input := map[string]string{
 		"PK": request.Email,
 	}
@@ -41,33 +43,34 @@ func (service *_AuthenticationService) Login(request LoginRequest) (LoginRespons
 
 	if err != nil {
 		log.Println("LoginError: ", err)
-		return LoginResponse{}, &AuthenticationError{Code: 503, Reason: "Internal Server Error"}
+		return nil, &Error{Code: 503, Reason: "Internal Server Error"}
 	}
 
 	if result == nil {
 		log.Println("LoginError: Item does not exist")
-		return LoginResponse{}, &AuthenticationError{Code: 401, Reason: "Invalid email or password, please try again"}
+		return nil, &Error{Code: 401, Reason: "Invalid email or password, please try again"}
 	}
 
 	invalid := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(request.Password))
 	if invalid != nil {
 		log.Println("LoginError: ", invalid)
-		return LoginResponse{}, &AuthenticationError{Code: 401, Reason: "Invalid email or password, please try again"}
+		return nil, &Error{Code: 401, Reason: "Invalid email or password, please try again"}
 	}
 
 	// create jwt token logic
-	token, createTokenError := CreateToken(result.Id)
+	token, createTokenError := CreateToken(result.ID)
 	if createTokenError != nil {
 		log.Println("LoginError: error occurred when generating access token", createTokenError)
-		return LoginResponse{}, &AuthenticationError{Code: 500, Reason: "Internal Server Error"}
+		return nil, &Error{Code: 500, Reason: "Internal Server Error"}
 	}
 
-	return LoginResponse{
+	return &LoginResponse{
 		AccessToken: token,
 	}, nil
 }
 
-func (service *_AuthenticationService) Signup(request SignupRequest) (SignupReponse, *AuthenticationError) {
+// Signup function to create an account
+func (service *_Service) Signup(request SignupRequest) (*SignupReponse, *Error) {
 	// get dynamodb item with user credentials
 	input := map[string]string{
 		"PK": request.Email,
@@ -75,27 +78,27 @@ func (service *_AuthenticationService) Signup(request SignupRequest) (SignupRepo
 
 	result, err := service.db.Read(input)
 	if err != nil {
-		fmt.Println("SignupError:", err)
-		return SignupReponse{}, &AuthenticationError{Code: 503, Reason: "Internal Server Error"}
+		log.Println("SignupError:", err)
+		return nil, &Error{Code: 503, Reason: "Internal Server Error"}
 	}
 
 	if result != nil {
-		fmt.Println("SignupError: Account already exists")
-		return SignupReponse{}, &AuthenticationError{Code: 400, Reason: "Account already exists"}
+		log.Println("SignupError: Account already exists")
+		return nil, &Error{Code: 400, Reason: "Account already exists"}
 	}
 
 	// Generate hash password and store
 	password := []byte(request.Password)
 	hashed, hashErr := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
 	if hashErr != nil {
-		fmt.Println("SignupError: Unable to generate hash from password", hashErr)
-		return SignupReponse{}, &AuthenticationError{Code: 500, Reason: "Internal Server Error"}
+		log.Println("SignupError: Unable to generate hash from password", hashErr)
+		return nil, &Error{Code: 500, Reason: "Internal Server Error"}
 	}
 
 	// Create account if no issues exists
 	account := Authentication{
 		PK:       request.Email,
-		Id:       uuid.New().String(),
+		ID:       uuid.New().String(),
 		Email:    request.Email,
 		Password: string(hashed),
 		Name:     request.Name,
@@ -106,16 +109,17 @@ func (service *_AuthenticationService) Signup(request SignupRequest) (SignupRepo
 	err = service.db.Write(account)
 	if err != nil {
 		log.Printf("SignupError: %s", err)
-		return SignupReponse{}, &AuthenticationError{Code: 503, Reason: "Internal Server Error"}
+		return nil, &Error{Code: 503, Reason: "Internal Server Error"}
 	}
 
-	return SignupReponse{Status: true}, nil
+	return &SignupReponse{Status: true}, nil
 }
 
-func CreateToken(userId string) (string, error) {
+// CreateToken function to create jwt
+func CreateToken(userID string) (string, error) {
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
-	claims["user_id"] = userId
+	claims["user_id"] = userID
 	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -128,6 +132,7 @@ func CreateToken(userId string) (string, error) {
 	return token, nil
 }
 
+// ExtractToken function to extract jwt from http request
 func ExtractToken(r *http.Request) string {
 	bearToken := r.Header.Get("Authorization")
 	//normally Authorization the_token_xxx
@@ -138,6 +143,7 @@ func ExtractToken(r *http.Request) string {
 	return ""
 }
 
+// VerifyToken function to verify jwt from http request
 func VerifyToken(r *http.Request) (*jwt.Token, error) {
 	tokenString := ExtractToken(r)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {

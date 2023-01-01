@@ -10,12 +10,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
 
-type _DatabaseService[T any] struct {
+type _Service[T any] struct {
 	db        *dynamodb.DynamoDB
 	tableName string
 }
 
-func NewDatabaseService[T any](tableName string) DatabaseService[T] {
+// NewDatabaseService function to initialize Service object
+func NewDatabaseService[T any](tableName string) Service[T] {
 	// https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html#specifying-credentials
 	// Initialize session and config for initializing client
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
@@ -32,16 +33,18 @@ func NewDatabaseService[T any](tableName string) DatabaseService[T] {
 
 	// Create new DynamoDB client
 	db := dynamodb.New(sess, cfg)
-	return &_DatabaseService[T]{db, tableName}
+	return &_Service[T]{db, tableName}
 }
 
-type DatabaseService[T any] interface {
+// Service interface which contains database operations
+type Service[T any] interface {
 	Read(keyObj interface{}) (*T, error)
 	Write(obj T) error
 	Delete(obj interface{}) error
 }
 
-func (service *_DatabaseService[T]) Read(keyObj interface{}) (*T, error) {
+// Read function to read data from database
+func (service *_Service[T]) Read(keyObj interface{}) (*T, error) {
 	// Create key object for DynamoDB Key
 	key, marshallError := dynamodbattribute.MarshalMap(keyObj)
 	if marshallError != nil {
@@ -70,7 +73,8 @@ func (service *_DatabaseService[T]) Read(keyObj interface{}) (*T, error) {
 	return &out, nil
 }
 
-func (service *_DatabaseService[T]) Write(obj T) error {
+// Write function to write data from database
+func (service *_Service[T]) Write(obj T) error {
 	// Create item object for DynamoDB
 	item, marshallError := dynamodbattribute.MarshalMap(obj)
 	if marshallError != nil {
@@ -87,7 +91,8 @@ func (service *_DatabaseService[T]) Write(obj T) error {
 	return err
 }
 
-func (service *_DatabaseService[T]) Delete(keyObj interface{}) error {
+// Delete function to delete data from database
+func (service *_Service[T]) Delete(keyObj interface{}) error {
 	// Create item object for DynamoDB
 	key, marshalError := dynamodbattribute.MarshalMap(keyObj)
 	if marshalError != nil {
