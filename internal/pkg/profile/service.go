@@ -71,8 +71,7 @@ func (service *_ProfileService) GetProfile(id string) (Profile, error) {
 	}
 
 	if result == nil {
-		msg := "Error: item not found"
-		return Profile{}, errors.New(msg)
+		return Profile{}, errors.New("item not found")
 	}
 
 	return obj, nil

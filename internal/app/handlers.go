@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"net/http"
 	"speakeasy/internal/pkg/authentication"
 
@@ -80,7 +79,7 @@ func (s *Server) Login() gin.HandlerFunc {
 		if err := c.Bind(&request); err != nil {
 			response := map[string]any{
 				"status":  http.StatusBadRequest,
-				"message": fmt.Sprintf("Bad Request"),
+				"message": "Bad Request",
 			}
 
 			c.JSON(http.StatusBadRequest, response)
@@ -111,7 +110,7 @@ func (s *Server) Signup() gin.HandlerFunc {
 		if err := c.Bind(&request); err != nil {
 			response := map[string]any{
 				"status":  http.StatusBadRequest,
-				"message": fmt.Sprintf("Bad Request"),
+				"message": "Bad Request",
 			}
 
 			c.JSON(http.StatusBadRequest, response)
@@ -119,7 +118,7 @@ func (s *Server) Signup() gin.HandlerFunc {
 		}
 
 		signup, err := s.authenticationService.Signup(request)
-		if err != nil || signup.Status != true {
+		if err != nil || !signup.Status {
 			response := map[string]any{
 				"status":  err.Code,
 				"message": err.Reason,
