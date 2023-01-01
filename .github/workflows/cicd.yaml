@@ -4,7 +4,7 @@ on:
       - main
 
 jobs:
-  integration:
+  ci:
     runs-on: "ubuntu-latest"
 
     steps:
@@ -40,8 +40,8 @@ jobs:
     - name: Run tests
       run: go test -race -vet=off -cover ./...
 
-  deployment:
-    needs: integration
+  cd:
+    needs: [ci]
     runs-on: "ubuntu-latest"
 
     steps:
