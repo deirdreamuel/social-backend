@@ -1,116 +1,98 @@
 package authentication
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"speakeasy/internal/pkg/database"
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type _AuthenticationService struct {
-	ddb       *dynamodb.DynamoDB
-	tableName string
+	db database.DatabaseService[Authentication]
 }
 
-func NewAuthenticationService(ddb *dynamodb.DynamoDB, tableName string) AuthenticationService {
+func NewAuthenticationService() AuthenticationService {
+	db := database.NewDatabaseService[Authentication]("Authentication3")
+
 	return &_AuthenticationService{
-		ddb,
-		tableName,
+		db,
 	}
 }
 
 type AuthenticationService interface {
-	Login(request LoginRequest) (LoginResponse, error)
-	Signup(request SignupRequest) (SignupReponse, error)
+	Login(request LoginRequest) (LoginResponse, *AuthenticationError)
+	Signup(request SignupRequest) (SignupReponse, *AuthenticationError)
 }
 
-func (service *_AuthenticationService) Login(request LoginRequest) (LoginResponse, error) {
-	// get dynamodb item with user credentials
-	input := &dynamodb.GetItemInput{
-		TableName: aws.String(service.tableName),
-		Key: map[string]*dynamodb.AttributeValue{
-			"PK": {
-				S: aws.String(request.Email),
-			},
-		},
+// Get dynamodb item with user credentials
+func (service *_AuthenticationService) Login(request LoginRequest) (LoginResponse, *AuthenticationError) {
+	input := map[string]string{
+		"PK": request.Email,
 	}
 
-	result, err := service.ddb.GetItem(input)
+	result, err := service.db.Read(input)
 
 	if err != nil {
-		fmt.Println("error occurred when getting item", err)
-		return LoginResponse{}, err
+		log.Println("LoginError: ", err)
+		return LoginResponse{}, &AuthenticationError{Code: 503, Reason: "Internal Server Error"}
 	}
 
-	if result.Item == nil {
-		fmt.Println("error item does not exist")
-		return LoginResponse{}, errors.New("item does not exists")
+	if result == nil {
+		log.Println("LoginError: Item does not exist")
+		return LoginResponse{}, &AuthenticationError{Code: 401, Reason: "Invalid email or password, please try again"}
 	}
 
-	item := Authentication{}
-	dynamodbattribute.UnmarshalMap(result.Item, &item)
-
-	invalidPasswordError := bcrypt.CompareHashAndPassword([]byte(item.Password), []byte(request.Password))
-	if invalidPasswordError != nil {
-		fmt.Println("error validating password")
-		return LoginResponse{}, invalidPasswordError
+	invalid := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(request.Password))
+	if invalid != nil {
+		log.Println("LoginError: ", invalid)
+		return LoginResponse{}, &AuthenticationError{Code: 401, Reason: "Invalid email or password, please try again"}
 	}
 
 	// create jwt token logic
-	token, createTokenError := CreateToken(item.Id)
+	token, createTokenError := CreateToken(result.Id)
 	if createTokenError != nil {
-		fmt.Println("Login: error occurred when generating access token", createTokenError)
-		return LoginResponse{}, err
+		log.Println("LoginError: error occurred when generating access token", createTokenError)
+		return LoginResponse{}, &AuthenticationError{Code: 500, Reason: "Internal Server Error"}
 	}
 
-	response := LoginResponse{
+	return LoginResponse{
 		AccessToken: token,
-	}
-
-	return response, nil
+	}, nil
 }
 
-func (service *_AuthenticationService) Signup(request SignupRequest) (SignupReponse, error) {
+func (service *_AuthenticationService) Signup(request SignupRequest) (SignupReponse, *AuthenticationError) {
 	// get dynamodb item with user credentials
-	input := &dynamodb.GetItemInput{
-		TableName: aws.String(service.tableName),
-		Key: map[string]*dynamodb.AttributeValue{
-			"PK": {
-				S: aws.String(request.Email),
-			},
-		},
+	input := map[string]string{
+		"PK": request.Email,
 	}
 
-	result, err := service.ddb.GetItem(input)
+	result, err := service.db.Read(input)
 	if err != nil {
-		fmt.Println("error occurred when getting item", err)
-		return SignupReponse{}, err
+		fmt.Println("SignupError:", err)
+		return SignupReponse{}, &AuthenticationError{Code: 503, Reason: "Internal Server Error"}
 	}
 
-	if result.Item != nil {
-		fmt.Println("error account already exists")
-		return SignupReponse{}, errors.New("account already exists")
+	if result != nil {
+		fmt.Println("SignupError: Account already exists")
+		return SignupReponse{}, &AuthenticationError{Code: 400, Reason: "Account already exists"}
 	}
 
-	// hash password for storage
+	// Generate hash password and store
 	password := []byte(request.Password)
 	hashed, hashErr := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
 	if hashErr != nil {
-		fmt.Println("error occurred when getting item", hashErr)
-		return SignupReponse{}, err
+		fmt.Println("SignupError: Unable to generate hash from password", hashErr)
+		return SignupReponse{}, &AuthenticationError{Code: 500, Reason: "Internal Server Error"}
 	}
 
-	// create account if no issues exists
+	// Create account if no issues exists
 	account := Authentication{
 		PK:       request.Email,
 		Id:       uuid.New().String(),
@@ -120,22 +102,11 @@ func (service *_AuthenticationService) Signup(request SignupRequest) (SignupRepo
 		Phone:    request.Phone,
 	}
 
-	// save item to database
-	accountItem, marshallErr := dynamodbattribute.MarshalMap(account)
-	putItemInput := &dynamodb.PutItemInput{
-		Item:      accountItem,
-		TableName: aws.String(service.tableName),
-	}
-
-	if marshallErr != nil {
-		fmt.Println("error occurred when getting item", hashErr)
-		return SignupReponse{}, err
-	}
-
-	_, err = service.ddb.PutItem(putItemInput)
+	// Save item to database
+	err = service.db.Write(account)
 	if err != nil {
-		log.Printf("error putting dynamodb item: %s", err)
-		return SignupReponse{}, err
+		log.Printf("SignupError: %s", err)
+		return SignupReponse{}, &AuthenticationError{Code: 503, Reason: "Internal Server Error"}
 	}
 
 	return SignupReponse{Status: true}, nil
@@ -144,7 +115,7 @@ func (service *_AuthenticationService) Signup(request SignupRequest) (SignupRepo
 func CreateToken(userId string) (string, error) {
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
-	claims["id"] = userId
+	claims["user_id"] = userId
 	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

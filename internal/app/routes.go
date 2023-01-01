@@ -11,11 +11,11 @@ func (s *Server) Routes() *gin.Engine {
 		v1.GET("/status", s.ApiStatus())
 
 		// prefix the user routes
-		user := v1.Group("/profile")
-		{
-			user.POST("", s.PutProfile())
-			user.GET("", s.ReadProfile())
-		}
+		// user := v1.Group("/profile")
+		// {
+		// 	user.POST("", s.PutProfile())
+		// 	user.GET("", s.ReadProfile())
+		// }
 
 		auth := v1.Group("/auth")
 		{

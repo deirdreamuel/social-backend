@@ -1,9 +1,5 @@
 package authentication
 
-import (
-	"time"
-)
-
 type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -25,12 +21,12 @@ type SignupReponse struct {
 }
 
 type Authentication struct {
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	PK        string    `json:"PK"`
-	Id        string    `json:"id"`
-	Email     string    `json:"email"`
-	Password  string    `json:"password"`
-	Name      string    `json:"name"`
-	Phone     string    `json:"phone"`
+	CreatedAt string `json:"created_at,omitempty"`
+	UpdatedAt string `json:"updated_at,omitempty"`
+	PK        string `json:"PK,omitempty"`
+	Id        string `json:"id,omitempty"`
+	Email     string `json:"email,omitempty"`
+	Password  string `json:"password,omitempty"`
+	Name      string `json:"name,omitempty"`
+	Phone     string `json:"phone,omitempty"`
 }
