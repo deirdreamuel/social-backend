@@ -19,7 +19,7 @@ type _AuthenticationService struct {
 }
 
 func NewAuthenticationService() AuthenticationService {
-	db := database.NewDatabaseService[Authentication]("Authentication3")
+	db := database.NewDatabaseService[Authentication]("Authentication")
 
 	return &_AuthenticationService{
 		db,
