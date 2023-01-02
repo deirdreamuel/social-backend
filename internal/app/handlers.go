@@ -86,6 +86,6 @@ func (s *Server) Signup() gin.HandlerFunc {
 			"message": "Created",
 		}
 
-		c.JSON(http.StatusOK, response)
+		c.JSON(http.StatusCreated, response)
 	}
 }
