@@ -9,7 +9,7 @@ func (s *Server) Routes() *gin.Engine {
 	// version 1 apis
 	v1 := router.Group("/v1")
 	{
-		v1.GET("/health", s.HealthCheck())
+		v1.GET("/", s.HealthCheck())
 
 		auth := v1.Group("/auth")
 		{
