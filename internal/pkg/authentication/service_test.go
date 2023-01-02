@@ -92,7 +92,7 @@ func TestLogin(t *testing.T) {
 		})
 
 		assert.Equal(t, 401, err.Code, "Error should be 401")
-		assert.Empty(t, result.AccessToken, "Access token should be empty")
+		assert.Empty(t, result, "Access token should be empty")
 	})
 
 	t.Run("ERROR: RETURN 401 WHEN USER DOES NOT EXIST", func(t *testing.T) {
@@ -104,7 +104,7 @@ func TestLogin(t *testing.T) {
 		})
 
 		assert.Equal(t, 401, err.Code, "Error should be 401")
-		assert.Empty(t, result.AccessToken, "Access token should be empty")
+		assert.Empty(t, result, "Access token should be empty")
 	})
 
 	t.Run("ERROR: RETURN 503 WHEN DB RETURNS ERROR", func(t *testing.T) {
