@@ -38,7 +38,7 @@ func main() {
 }
 
 func createAuthenticationTable(ddb *dynamodb.DynamoDB) error {
-	tableName := "Authentication"
+	tableName := "AUTHENTICATION"
 
 	input := &dynamodb.CreateTableInput{
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
@@ -71,7 +71,7 @@ func createAuthenticationTable(ddb *dynamodb.DynamoDB) error {
 }
 
 func createProfileTable(svc *dynamodb.DynamoDB) error {
-	tableName := "Profile"
+	tableName := "APPLICATION"
 
 	input := &dynamodb.CreateTableInput{
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{

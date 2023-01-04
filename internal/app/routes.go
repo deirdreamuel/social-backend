@@ -17,6 +17,12 @@ func (s *Server) Routes() *gin.Engine {
 			auth.POST("signup", s.Signup())
 			auth.POST("login", s.Login())
 		}
+
+		trip := v1.Group("/trip")
+		{
+			trip.POST("", s.CreateTrip())
+			trip.GET("/:tripid", s.GetTrip())
+		}
 	}
 
 	return router

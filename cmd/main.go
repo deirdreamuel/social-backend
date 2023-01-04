@@ -3,6 +3,7 @@ package main
 import (
 	"speakeasy/internal/app"
 	"speakeasy/internal/pkg/authentication"
+	"speakeasy/internal/pkg/trip"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -18,10 +19,12 @@ func main() {
 
 	// Create services
 	authenticationSvc := authentication.NewAuthenticationService()
+	tripSvc := trip.NewTripService()
 
 	server := app.NewServer(
 		router,
 		authenticationSvc,
+		tripSvc,
 	)
 
 	server.Run()

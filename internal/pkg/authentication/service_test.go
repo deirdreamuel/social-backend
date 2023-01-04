@@ -2,7 +2,7 @@ package authentication
 
 import (
 	"errors"
-	"speakeasy/internal/pkg/database"
+	"speakeasy/pkg/database"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

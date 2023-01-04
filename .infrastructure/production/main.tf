@@ -296,7 +296,7 @@ resource "aws_iam_role" "ecs_task_role" {
 
 # DynamoDB table for authentication
 resource "aws_dynamodb_table" "authentication_dynamodb_table" {
-  name           = "Authentication"
+  name           = "AUTHENTICATION"
   hash_key       = "PK"
   read_capacity  = 10
   write_capacity = 10
@@ -307,7 +307,45 @@ resource "aws_dynamodb_table" "authentication_dynamodb_table" {
   }
 
   tags = {
-    Name        = "Authentication"
+    Name        = "AUTHENTICATION"
+    Environment = "production"
+  }
+}
+
+# DynamoDB table for authentication
+resource "aws_dynamodb_table" "application_dynamodb_table" {
+  name           = "APPLICATION"
+  hash_key       = "PK"
+  range_key      = "SK"
+  read_capacity  = 10
+  write_capacity = 10
+
+  attribute {
+    name = "PK"
+    type = "S"
+  }
+
+  attribute {
+    name = "SK"
+    type = "S"
+  }
+  
+  attribute {
+    name = "GSI1"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name               = "APPLICATION_GSI_1"
+    hash_key           = "GSI1"
+    range_key          = "SK"
+    write_capacity     = 10
+    read_capacity      = 10
+    projection_type    = "ALL"
+  }
+
+  tags = {
+    Name        = "APPLICATION"
     Environment = "production"
   }
 }
@@ -335,7 +373,10 @@ resource "aws_iam_policy" "dynamodb_task_policy" {
           "dynamodb:UpdateItem",
           "dynamodb:UpdateTable"
         ],
-        Resource = aws_dynamodb_table.authentication_dynamodb_table.arn
+        Resource = [
+            aws_dynamodb_table.authentication_dynamodb_table.arn,
+            aws_dynamodb_table.application_dynamodb_table.arn,
+        ]
       }
     ]
   })
