@@ -6,12 +6,15 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/joho/godotenv"
 
 	"fmt"
 	"log"
 )
 
 func main() {
+	godotenv.Load()
+
 	// https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html#specifying-credentials
 	// Initialize session and config for initializing client
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
@@ -25,6 +28,7 @@ func main() {
 		Region:   &region,
 		Endpoint: &endpoint,
 	}
+
 	// Create DynamoDB client
 	svc := dynamodb.New(sess, cfg)
 
@@ -32,7 +36,7 @@ func main() {
 		log.Fatalf("Got error calling CreateAuthenticationTable: %s", err)
 	}
 
-	if err := createProfileTable(svc); err != nil {
+	if err := createApplicationTable(svc); err != nil {
 		log.Fatalf("Got error calling CreateProfileTable: %s", err)
 	}
 }
@@ -70,7 +74,7 @@ func createAuthenticationTable(ddb *dynamodb.DynamoDB) error {
 	return nil
 }
 
-func createProfileTable(svc *dynamodb.DynamoDB) error {
+func createApplicationTable(svc *dynamodb.DynamoDB) error {
 	tableName := "APPLICATION"
 
 	input := &dynamodb.CreateTableInput{
@@ -83,6 +87,10 @@ func createProfileTable(svc *dynamodb.DynamoDB) error {
 				AttributeName: aws.String("SK"),
 				AttributeType: aws.String("S"),
 			},
+			{
+				AttributeName: aws.String("GSI1"),
+				AttributeType: aws.String("S"),
+			},
 		},
 		KeySchema: []*dynamodb.KeySchemaElement{
 			{
@@ -92,6 +100,28 @@ func createProfileTable(svc *dynamodb.DynamoDB) error {
 			{
 				AttributeName: aws.String("SK"),
 				KeyType:       aws.String("RANGE"),
+			},
+		},
+		GlobalSecondaryIndexes: []*dynamodb.GlobalSecondaryIndex{
+			{
+				IndexName: aws.String("APPLICATION_GSI_1"),
+				KeySchema: []*dynamodb.KeySchemaElement{
+					{
+						AttributeName: aws.String("GSI1"),
+						KeyType:       aws.String("HASH"),
+					},
+					{
+						AttributeName: aws.String("SK"),
+						KeyType:       aws.String("RANGE"),
+					},
+				},
+				Projection: &dynamodb.Projection{
+					ProjectionType: aws.String("ALL"),
+				},
+				ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
+					ReadCapacityUnits:  aws.Int64(10),
+					WriteCapacityUnits: aws.Int64(10),
+				},
 			},
 		},
 		ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
