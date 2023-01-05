@@ -7,6 +7,8 @@ import (
 	"speakeasy/pkg/database"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type _Service struct {
@@ -26,11 +28,14 @@ func NewTripService() Service {
 type Service interface {
 	CreateTrip(trip *Trip) *pkg.Error
 	GetTrip(tripID string) (*Trip, *pkg.Error)
+	GetTripsByUser(userID string) (*[]Trip, *pkg.Error)
+	GetTripParticipants(tripID string) (*[]Trip, *pkg.Error)
 }
 
 // CreateTrip function to create trip
 func (service *_Service) CreateTrip(trip *Trip) *pkg.Error {
-	if len(strings.TrimSpace(trip.UserID)) == 0 {
+	// Validate create trip request
+	if len(strings.TrimSpace(trip.CreatedBy)) == 0 {
 		return &pkg.Error{Code: 400, Reason: "User ID cannot be empty"}
 	}
 
@@ -38,6 +43,7 @@ func (service *_Service) CreateTrip(trip *Trip) *pkg.Error {
 		return &pkg.Error{Code: 400, Reason: "Trip name cannot be empty"}
 	}
 
+	// Validate trip dates
 	from, err := time.Parse(time.RFC3339, trip.FromDate)
 	if err != nil {
 		log.Println("CreateTripError:", err)
@@ -60,9 +66,19 @@ func (service *_Service) CreateTrip(trip *Trip) *pkg.Error {
 		return &pkg.Error{Code: 400, Reason: "Trip dates are invalid"}
 	}
 
-	writeError := service.db.Write(*trip)
-	if writeError != nil {
-		log.Println("CreateTripError:", writeError)
+	// Add primary and sort key to item
+	uid := uuid.New().String()
+	trip.ID = uid
+	trip.PK = fmt.Sprintf("TRIP#%s", uid)
+	trip.SK = fmt.Sprintf("TRIP#%s", uid)
+
+	// Create another item for user reference
+	userTrip := *trip
+	userTrip.PK = fmt.Sprintf("USER#%s", userTrip.CreatedBy)
+
+	err = service.db.Write(*trip, userTrip)
+	if err != nil {
+		log.Println("CreateTripError:", err)
 		return &pkg.Error{Code: 503, Reason: "Internal Server Error"}
 	}
 
@@ -76,7 +92,7 @@ func (service *_Service) GetTrip(tripID string) (*Trip, *pkg.Error) {
 		"SK": fmt.Sprintf("TRIP#%s", tripID),
 	}
 
-	result, err := service.db.Read(input)
+	result, err := service.db.Get(input)
 	if err != nil {
 		log.Println("GetTrip:", err)
 		return nil, &pkg.Error{Code: 503, Reason: "Internal Server Error"}
@@ -88,4 +104,41 @@ func (service *_Service) GetTrip(tripID string) (*Trip, *pkg.Error) {
 	}
 
 	return result, nil
+}
+
+func (service *_Service) GetTripsByUser(userID string) (*[]Trip, *pkg.Error) {
+	filter := map[string]string{
+		":PK": fmt.Sprintf("USER#%s", userID),
+		":SK": "TRIP",
+	}
+
+	condition := "PK = :PK And begins_with(SK, :SK)"
+
+	results, err := service.db.Query(filter, condition)
+	if err != nil {
+		log.Println("GetTripsByUser:", err)
+		return nil, &pkg.Error{Code: 503, Reason: "Internal Server Error"}
+	}
+
+	return results, nil
+}
+
+func (service *_Service) GetTripParticipants(tripID string) (*[]Trip, *pkg.Error) {
+	filter := map[string]string{
+		":SK": fmt.Sprintf("TRIP#%s", tripID),
+		":PK": "USER",
+	}
+
+	log.Println(filter)
+
+	condition := "SK = :SK"
+	filterExpr := "begins_with(PK, :PK)"
+
+	results, err := service.db.QueryWithIndex(filter, condition, filterExpr, "APPLICATION_GSI_1")
+	if err != nil {
+		log.Println("GetTripParticipants:", err)
+		return nil, &pkg.Error{Code: 503, Reason: "Internal Server Error"}
+	}
+
+	return results, nil
 }

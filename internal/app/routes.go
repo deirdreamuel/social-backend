@@ -22,6 +22,12 @@ func (s *Server) Routes() *gin.Engine {
 		{
 			trip.POST("", s.CreateTrip())
 			trip.GET("/:tripid", s.GetTrip())
+			trip.GET("/:tripid/participants", s.GetTripParticipants())
+		}
+
+		user := v1.Group("/user")
+		{
+			user.GET("/:userid/trips", s.GetUserTrips())
 		}
 	}
 

@@ -330,15 +330,9 @@ resource "aws_dynamodb_table" "application_dynamodb_table" {
     type = "S"
   }
   
-  attribute {
-    name = "GSI1"
-    type = "S"
-  }
-
   global_secondary_index {
     name               = "APPLICATION_GSI_1"
-    hash_key           = "GSI1"
-    range_key          = "SK"
+    hash_key           = "SK"
     write_capacity     = 10
     read_capacity      = 10
     projection_type    = "ALL"

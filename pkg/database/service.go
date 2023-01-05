@@ -38,28 +38,30 @@ func NewDatabaseService[T any](tableName string) Service[T] {
 
 // Service interface which contains database operations
 type Service[T any] interface {
-	Read(keyObj interface{}) (*T, error)
-	Write(obj T) error
+	Get(keyObj interface{}) (*T, error)
+	Write(obj ...T) error
 	Delete(obj interface{}) error
+	Query(filterObj interface{}, condition string) (*[]T, error)
+	QueryWithIndex(filterObj interface{}, condition string, filterExpr string, index string) (*[]T, error)
 }
 
-// Read function to read data from database
-func (service *_Service[T]) Read(keyObj interface{}) (*T, error) {
+// Get function to read data from database
+func (service *_Service[T]) Get(keyObj interface{}) (*T, error) {
 	// Create key object for DynamoDB Key
 	key, marshallError := dynamodbattribute.MarshalMap(keyObj)
 	if marshallError != nil {
-		log.Println("ReadError: MarshalError: ", marshallError)
+		log.Println("GetError: MarshalError: ", marshallError)
 		return nil, marshallError
 	}
 
 	input := &dynamodb.GetItemInput{
-		TableName: aws.String(service.tableName),
+		TableName: &service.tableName,
 		Key:       key,
 	}
 
 	result, err := service.db.GetItem(input)
 	if err != nil {
-		log.Println("ReadError: ", err)
+		log.Println("GetError: ", err)
 		return nil, err
 	}
 
@@ -68,26 +70,39 @@ func (service *_Service[T]) Read(keyObj interface{}) (*T, error) {
 	}
 
 	var out T
-	dynamodbattribute.UnmarshalMap(result.Item, &out)
+	err = dynamodbattribute.UnmarshalMap(result.Item, &out)
 
-	return &out, nil
+	return &out, err
 }
 
 // Write function to write data from database
-func (service *_Service[T]) Write(obj T) error {
-	// Create item object for DynamoDB
-	item, marshallError := dynamodbattribute.MarshalMap(obj)
-	if marshallError != nil {
-		log.Println("Error: ", marshallError)
-		return marshallError
+func (service *_Service[T]) Write(objs ...T) error {
+	items := []*dynamodb.WriteRequest{}
+
+	for _, obj := range objs {
+		// Create item object for DynamoDB
+		item, err := dynamodbattribute.MarshalMap(obj)
+		if err != nil {
+			log.Println("Error: ", err)
+			return err
+		}
+
+		req := dynamodb.WriteRequest{
+			PutRequest: &dynamodb.PutRequest{
+				Item: item,
+			},
+		}
+
+		items = append(items, &req)
 	}
 
-	input := &dynamodb.PutItemInput{
-		TableName: aws.String(service.tableName),
-		Item:      item,
+	input := &dynamodb.BatchWriteItemInput{
+		RequestItems: map[string][]*dynamodb.WriteRequest{
+			service.tableName: items,
+		},
 	}
 
-	_, err := service.db.PutItem(input)
+	_, err := service.db.BatchWriteItem(input)
 	return err
 }
 
@@ -101,10 +116,68 @@ func (service *_Service[T]) Delete(keyObj interface{}) error {
 	}
 
 	input := &dynamodb.DeleteItemInput{
-		TableName: aws.String(service.tableName),
+		TableName: &service.tableName,
 		Key:       key,
 	}
 
 	_, err := service.db.DeleteItem(input)
 	return err
+}
+
+// Query function to query data from database
+func (service *_Service[T]) Query(filterObj interface{}, condition string) (*[]T, error) {
+	// Create item object for DynamoDB
+	filter, err := dynamodbattribute.MarshalMap(filterObj)
+	if err != nil {
+		log.Println("QueryError: ", err)
+		return nil, err
+	}
+
+	input := &dynamodb.QueryInput{
+		TableName:                 &service.tableName,
+		KeyConditionExpression:    &condition,
+		ExpressionAttributeValues: filter,
+	}
+
+	result, err := service.db.Query(input)
+	if err != nil {
+		log.Println("QueryError: ", err)
+		return nil, err
+	}
+
+	var out []T
+
+	err = dynamodbattribute.UnmarshalListOfMaps(result.Items, &out)
+
+	return &out, err
+}
+
+// Query function to query data from database
+func (service *_Service[T]) QueryWithIndex(filterObj interface{}, condition string, filterExpr string, index string) (*[]T, error) {
+	// Create item object for DynamoDB
+	filter, err := dynamodbattribute.MarshalMap(filterObj)
+	if err != nil {
+		log.Println("QueryWithIndexError: ", err)
+		return nil, err
+	}
+
+	input := &dynamodb.QueryInput{
+		TableName:                 &service.tableName,
+		IndexName:                 &index,
+		KeyConditionExpression:    &condition,
+		FilterExpression:          &filterExpr,
+		ExpressionAttributeValues: filter,
+	}
+
+	result, err := service.db.Query(input)
+	if err != nil {
+		log.Println("QueryWithIndexError: ", err)
+		return nil, err
+	}
+
+	var out []T
+
+	err = dynamodbattribute.UnmarshalListOfMaps(result.Items, &out)
+
+	return &out, err
 }

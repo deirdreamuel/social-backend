@@ -45,13 +45,13 @@ type Location struct {
 }
 
 type Trip struct {
-	PK           string        `json:"PK"`
-	ID           string        `json:"id"`
-	UserID       string        `json:"user_id"`
-	FromDate     string        `json:"from_date"`
-	ToDate       string        `json:"to_date"`
-	Name         string        `json:"name"`
-	Description  string        `json:"description"`
-	Location     Location      `json:"location"`
-	Participants []Participant `json:"participants"`
+	PK          string   `json:"PK"`
+	SK          string   `json:"SK"`
+	ID          string   `json:"id"`
+	CreatedBy   string   `json:"created_by"`
+	FromDate    string   `json:"from_date"`
+	ToDate      string   `json:"to_date"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Location    Location `json:"location"`
 }

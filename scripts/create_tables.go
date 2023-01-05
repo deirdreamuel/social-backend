@@ -37,7 +37,7 @@ func main() {
 	}
 
 	if err := createApplicationTable(svc); err != nil {
-		log.Fatalf("Got error calling CreateProfileTable: %s", err)
+		log.Fatalf("Got error calling createApplicationTable: %s", err)
 	}
 }
 
@@ -87,10 +87,6 @@ func createApplicationTable(svc *dynamodb.DynamoDB) error {
 				AttributeName: aws.String("SK"),
 				AttributeType: aws.String("S"),
 			},
-			{
-				AttributeName: aws.String("GSI1"),
-				AttributeType: aws.String("S"),
-			},
 		},
 		KeySchema: []*dynamodb.KeySchemaElement{
 			{
@@ -107,12 +103,8 @@ func createApplicationTable(svc *dynamodb.DynamoDB) error {
 				IndexName: aws.String("APPLICATION_GSI_1"),
 				KeySchema: []*dynamodb.KeySchemaElement{
 					{
-						AttributeName: aws.String("GSI1"),
-						KeyType:       aws.String("HASH"),
-					},
-					{
 						AttributeName: aws.String("SK"),
-						KeyType:       aws.String("RANGE"),
+						KeyType:       aws.String("HASH"),
 					},
 				},
 				Projection: &dynamodb.Projection{

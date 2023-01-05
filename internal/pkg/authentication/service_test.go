@@ -14,25 +14,25 @@ type _DatabaseServiceMockItemExists struct {
 	database.Service[Authentication]
 }
 
-func (db *_DatabaseServiceMockItemExists) Read(keyObj interface{}) (*Authentication, error) {
+func (db *_DatabaseServiceMockItemExists) Get(keyObj interface{}) (*Authentication, error) {
 	hash, _ := bcrypt.GenerateFromPassword([]byte("correct.password"), bcrypt.DefaultCost)
 	return &Authentication{Password: string(hash)}, nil
 }
 
-func (db *_DatabaseServiceMockItemExists) Write(obj Authentication) error {
+func (db *_DatabaseServiceMockItemExists) Write(obj ...Authentication) error {
 	return nil
 }
 
-// Mock DatabaseService where .Read returns an error
-type _DatabaseServiceMockReadError struct {
+// Mock DatabaseService where .Get returns an error
+type _DatabaseServiceMockGetError struct {
 	database.Service[Authentication]
 }
 
-func (db *_DatabaseServiceMockReadError) Read(keyObj interface{}) (*Authentication, error) {
+func (db *_DatabaseServiceMockGetError) Get(keyObj interface{}) (*Authentication, error) {
 	return nil, errors.New("ERROR")
 }
 
-func (db *_DatabaseServiceMockReadError) Write(obj Authentication) error {
+func (db *_DatabaseServiceMockGetError) Write(obj ...Authentication) error {
 	return nil
 }
 
@@ -41,11 +41,11 @@ type _DatabaseServiceMockWriteError struct {
 	database.Service[Authentication]
 }
 
-func (db *_DatabaseServiceMockWriteError) Read(keyObj interface{}) (*Authentication, error) {
+func (db *_DatabaseServiceMockWriteError) Get(keyObj interface{}) (*Authentication, error) {
 	return nil, nil
 }
 
-func (db *_DatabaseServiceMockWriteError) Write(obj Authentication) error {
+func (db *_DatabaseServiceMockWriteError) Write(obj ...Authentication) error {
 	return errors.New("ERROR")
 }
 
@@ -54,11 +54,11 @@ type _DatabaseServiceMockItemNotFound struct {
 	database.Service[Authentication]
 }
 
-func (db *_DatabaseServiceMockItemNotFound) Read(keyObj interface{}) (*Authentication, error) {
+func (db *_DatabaseServiceMockItemNotFound) Get(keyObj interface{}) (*Authentication, error) {
 	return nil, nil
 }
 
-func (db *_DatabaseServiceMockItemNotFound) Write(obj Authentication) error {
+func (db *_DatabaseServiceMockItemNotFound) Write(obj ...Authentication) error {
 	return nil
 }
 
@@ -108,7 +108,7 @@ func TestLogin(t *testing.T) {
 	})
 
 	t.Run("ERROR: RETURN 503 WHEN DB RETURNS ERROR", func(t *testing.T) {
-		svc := &_Service{db: &_DatabaseServiceMockReadError{}}
+		svc := &_Service{db: &_DatabaseServiceMockGetError{}}
 
 		result, err := svc.Login(LoginRequest{
 			Email:    "user@email.com",
@@ -148,7 +148,7 @@ func TestSignup(t *testing.T) {
 	})
 
 	t.Run("ERROR: RETURN 503 WHEN DB READ RETURNS ERROR", func(t *testing.T) {
-		svc := &_Service{db: &_DatabaseServiceMockReadError{}}
+		svc := &_Service{db: &_DatabaseServiceMockGetError{}}
 
 		result, err := svc.Signup(SignupRequest{
 			Email:    "user@email.com",

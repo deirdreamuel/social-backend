@@ -41,7 +41,7 @@ func (service *_Service) Login(request LoginRequest) (*LoginResponse, *pkg.Error
 		"PK": request.Email,
 	}
 
-	result, err := service.db.Read(input)
+	result, err := service.db.Get(input)
 
 	if err != nil {
 		log.Println("LoginError: ", err)
@@ -78,7 +78,7 @@ func (service *_Service) Signup(request SignupRequest) (*SignupReponse, *pkg.Err
 		"PK": request.Email,
 	}
 
-	result, err := service.db.Read(input)
+	result, err := service.db.Get(input)
 	if err != nil {
 		log.Println("SignupError:", err)
 		return nil, &pkg.Error{Code: 503, Reason: "Internal Server Error"}
