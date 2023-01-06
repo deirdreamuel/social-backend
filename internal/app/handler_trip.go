@@ -2,6 +2,8 @@ package app
 
 import (
 	"net/http"
+
+	"speakeasy/internal/pkg/authentication"
 	"speakeasy/internal/pkg/trip"
 
 	"github.com/gin-gonic/gin"
@@ -23,6 +25,21 @@ func (s *Server) CreateTrip() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, response)
 			return
 		}
+
+		// Get UserID from JWT
+		claims, errauth := authentication.GetTokenClaims(c.Request)
+		if errauth != nil {
+			response := map[string]any{
+				"status":  401,
+				"message": "Token expired",
+			}
+
+			c.JSON(401, response)
+			return
+		}
+
+		userID := ((*claims)["user_id"]).(string)
+		request.CreatedBy = userID
 
 		err := s.tripService.CreateTrip(&request)
 		if err != nil {
