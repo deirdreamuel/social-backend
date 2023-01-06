@@ -25,9 +25,10 @@ func (s *Server) Routes() *gin.Engine {
 			trip.GET("/:tripid/participants", s.GetTripParticipants())
 		}
 
-		user := v1.Group("/user")
+		user := v1.Group("/trips")
 		{
-			user.GET("/:userid/trips", s.GetUserTrips())
+			user.GET("/user/:userid", s.GetUserTrips())
+			user.GET("/user/me", s.GetMyTrips())
 		}
 	}
 
