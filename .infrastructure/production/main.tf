@@ -365,7 +365,8 @@ resource "aws_iam_policy" "dynamodb_task_policy" {
           "dynamodb:Scan",
           "dynamodb:Query",
           "dynamodb:UpdateItem",
-          "dynamodb:UpdateTable"
+          "dynamodb:UpdateTable",
+          "dynamodb:BatchWriteItem"
         ],
         Resource = [
             aws_dynamodb_table.authentication_dynamodb_table.arn,
