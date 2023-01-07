@@ -1,5 +1,11 @@
 # Go Project
 
+### Visit Website
+https://amuel.org/
+
+#### Frontend
+https://github.com/deirdreamuel/social-frontend
+
 ### Running project locally using Docker Compose
 1. `docker compose build`
 2. `docker compose up`
