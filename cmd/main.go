@@ -3,6 +3,7 @@ package main
 import (
 	"speakeasy/internal/app"
 	"speakeasy/internal/pkg/authentication"
+	"speakeasy/internal/pkg/profile"
 	"speakeasy/internal/pkg/trip"
 	"time"
 
@@ -26,13 +27,15 @@ func main() {
 	}))
 
 	// Create services
-	authenticationSvc := authentication.NewAuthenticationService()
-	tripSvc := trip.NewTripService()
+	authenticationService := authentication.NewAuthenticationService()
+	tripService := trip.NewTripService()
+	profileService := profile.NewProfileService()
 
 	server := app.NewServer(
 		router,
-		authenticationSvc,
-		tripSvc,
+		authenticationService,
+		tripService,
+		profileService,
 	)
 
 	server.Run()

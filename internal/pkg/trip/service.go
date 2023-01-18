@@ -76,7 +76,7 @@ func (service *_Service) CreateTrip(trip *Trip) *pkg.Error {
 	userTrip := *trip
 	userTrip.PK = fmt.Sprintf("USER#%s", userTrip.CreatedBy)
 
-	err = service.db.Write(*trip, userTrip)
+	err = service.db.Write(trip, &userTrip)
 	if err != nil {
 		log.Println("CreateTripError:", err)
 		return &pkg.Error{Code: 503, Reason: "Internal Server Error"}

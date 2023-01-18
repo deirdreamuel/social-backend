@@ -24,15 +24,14 @@ type _Service struct {
 func NewAuthenticationService() Service {
 	db := database.NewDatabaseService[Authentication]("AUTHENTICATION")
 
-	return &_Service{
-		db,
-	}
+	return &_Service{db}
 }
 
 // Service interface which contains authentication operations
 type Service interface {
 	Login(request LoginRequest) (*LoginResponse, *pkg.Error)
 	Signup(request SignupRequest) (*SignupReponse, *pkg.Error)
+	Refresh(request *RefreshRequest) (*Token, error)
 }
 
 // Login function to get access token
@@ -66,9 +65,7 @@ func (service *_Service) Login(request LoginRequest) (*LoginResponse, *pkg.Error
 		return nil, &pkg.Error{Code: 500, Reason: "Internal Server pkg.Error"}
 	}
 
-	return &LoginResponse{
-		AccessToken: token,
-	}, nil
+	return &LoginResponse{*token}, nil
 }
 
 // Signup function to create an account
@@ -108,7 +105,7 @@ func (service *_Service) Signup(request SignupRequest) (*SignupReponse, *pkg.Err
 	}
 
 	// Save item to database
-	err = service.db.Write(account)
+	err = service.db.Write(&account)
 	if err != nil {
 		log.Printf("SignupError: %s", err)
 		return nil, &pkg.Error{Code: 503, Reason: "Internal Server Error"}
@@ -117,21 +114,66 @@ func (service *_Service) Signup(request SignupRequest) (*SignupReponse, *pkg.Err
 	return &SignupReponse{Status: true}, nil
 }
 
-// CreateToken function to create jwt
-func CreateToken(userID string) (string, error) {
-	claims := jwt.MapClaims{}
-	claims["authorized"] = true
-	claims["user_id"] = userID
-	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
-
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	token, err := accessToken.SignedString([]byte(os.Getenv("JWT_SECRET")))
+// Refresh function to refresh access token
+func (service *_Service) Refresh(request *RefreshRequest) (*Token, error) {
+	refreshToken, err := VerifyTokenString(request.RefreshToken)
 	if err != nil {
-		return "", err
+		fmt.Println("ERR! Refresh token cannot be verified.")
+		return nil, err
+	}
+
+	//Since token is valid, get the uuid:
+	claims, ok := refreshToken.Claims.(jwt.MapClaims) //the token claims should conform to MapClaims
+	if !ok || !refreshToken.Valid {
+		fmt.Println("ERR! Refresh token cannot be verified.")
+		return nil, err
+	}
+
+	userID, ok := claims["user_id"].(string)
+	if !ok {
+		fmt.Println("ERR! Refresh token cannot be verified.")
+		return nil, err
+	}
+
+	token, err := CreateToken(userID)
+	if err != nil {
+		fmt.Println("ERR! Refresh token cannot be verified.")
+		return nil, err
 	}
 
 	return token, nil
+}
+
+// CreateToken function to create jwt
+func CreateToken(userID string) (*Token, error) {
+	token := Token{}
+
+	// Set generic claims for both access and refresh tokens
+	claims := jwt.MapClaims{}
+	claims["authorized"] = true
+	claims["user_id"] = userID
+
+	// Set claims and retrieve access token
+	claims["id"] = uuid.New().String()
+	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signed, err := accessToken.SignedString([]byte(os.Getenv("JWT_ACCESS_SECRET")))
+	if err != nil {
+		return nil, err
+	}
+	token.AccessToken = signed
+
+	// Set claims and retrieve refresh token
+	claims["id"] = uuid.New().String()
+	claims["exp"] = time.Now().Add(time.Hour * 24 * 7).Unix()
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signed, err = refreshToken.SignedString([]byte(os.Getenv("JWT_REFRESH_SECRET")))
+	if err != nil {
+		return nil, err
+	}
+	token.RefreshToken = signed
+
+	return &token, nil
 }
 
 // ExtractToken function to extract jwt from http request
@@ -143,6 +185,22 @@ func ExtractToken(r *http.Request) string {
 		return strArr[1]
 	}
 	return ""
+}
+
+// VerifyTokenString function to verify jwt from http request
+func VerifyTokenString(tokenString string) (*jwt.Token, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(os.Getenv("JWT_SECRET")), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
 }
 
 // VerifyToken function to verify jwt from http request

@@ -16,6 +16,7 @@ func (s *Server) Routes() *gin.Engine {
 		{
 			auth.POST("signup", s.Signup())
 			auth.POST("login", s.Login())
+			auth.POST("refresh", s.Refresh())
 		}
 
 		trip := v1.Group("/trip")
@@ -29,6 +30,13 @@ func (s *Server) Routes() *gin.Engine {
 		{
 			user.GET("/user/:userid", s.GetUserTrips())
 			user.GET("/user/me", s.GetMyTrips())
+		}
+
+		profile := v1.Group("/profile")
+		{
+			profile.GET("", s.GetMyProfile())
+			profile.POST("", s.CreateProfile())
+			profile.POST("/picture", s.UploadProfilePicture())
 		}
 	}
 

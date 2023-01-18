@@ -3,6 +3,7 @@ package app
 import (
 	"log"
 	"speakeasy/internal/pkg/authentication"
+	"speakeasy/internal/pkg/profile"
 	"speakeasy/internal/pkg/trip"
 
 	"github.com/gin-gonic/gin"
@@ -13,6 +14,7 @@ type Server struct {
 	router                *gin.Engine
 	authenticationService authentication.Service
 	tripService           trip.Service
+	profileService        profile.Service
 }
 
 // NewServer returns Server object
@@ -20,11 +22,13 @@ func NewServer(
 	router *gin.Engine,
 	authenticationService authentication.Service,
 	tripService trip.Service,
+	profileService profile.Service,
 ) *Server {
 	return &Server{
 		router:                router,
 		authenticationService: authenticationService,
 		tripService:           tripService,
+		profileService:        profileService,
 	}
 }
 

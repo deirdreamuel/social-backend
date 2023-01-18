@@ -1,5 +1,14 @@
+github.com/Masterminds/semver/v3 v3.1.1 h1:hLg3sBzpNErnxhQtUy/mmLR2I9foDujNK030IGemrRc=
+github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
+github.com/aws/aws-cdk-go/awscdk/v2 v2.29.0 h1:9mm4oWjVGU+POK8niAahvM6FmQnN+UNFvZmMLdZ1Fxc=
+github.com/aws/aws-cdk-go/awscdk/v2 v2.29.0/go.mod h1:EY8h/zcTgdfcg4YCjraAvbKnT8YWplL8mLQutTnIj+M=
 github.com/aws/aws-sdk-go v1.44.157 h1:JVBPpEWC8+yA7CbfAuTl/ZFFlHS3yoqWFqxFyTCISwg=
 github.com/aws/aws-sdk-go v1.44.157/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8Phjh7fkwI=
+github.com/aws/constructs-go/constructs/v10 v10.1.33 h1:oSKj8idTw3abnodW9Q9LTrh5kZcyXucHfUNVixZuhSo=
+github.com/aws/constructs-go/constructs/v10 v10.1.33/go.mod h1:qbIG6z4lreP1aYvcZjAGx6fGTSAZtDdeo5p8XPWbMb0=
+github.com/aws/jsii-runtime-go v1.60.0/go.mod h1:OPeobFzUctDjq8EXbRZbIphpzQg3lzMs8KH09xuHyk0=
+github.com/aws/jsii-runtime-go v1.60.1 h1:b/dh59Rxpqbg3YwkggUSnCRWT1yq7RUOM/2MsleGyXY=
+github.com/aws/jsii-runtime-go v1.60.1/go.mod h1:OPeobFzUctDjq8EXbRZbIphpzQg3lzMs8KH09xuHyk0=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

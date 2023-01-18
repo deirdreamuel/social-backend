@@ -75,3 +75,35 @@ func (s *Server) Signup() gin.HandlerFunc {
 		c.JSON(http.StatusCreated, response)
 	}
 }
+
+// Signup Gin handler function to signup user
+func (s *Server) Refresh() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("Content-Type", "application/json")
+
+		// read and validate request body
+		var request authentication.RefreshRequest
+		if err := c.Bind(&request); err != nil {
+			response := map[string]any{
+				"status":  http.StatusBadRequest,
+				"message": "Bad Request",
+			}
+
+			c.JSON(http.StatusBadRequest, response)
+			return
+		}
+
+		token, err := s.authenticationService.Refresh(&request)
+		if err != nil {
+			response := map[string]any{
+				"status":  http.StatusUnauthorized,
+				"message": "Unauthorized",
+			}
+
+			c.JSON(http.StatusUnauthorized, response)
+			return
+		}
+
+		c.JSON(http.StatusOK, token)
+	}
+}

@@ -19,7 +19,7 @@ func (db *_DatabaseServiceMockItemExists) Get(keyObj interface{}) (*Authenticati
 	return &Authentication{Password: string(hash)}, nil
 }
 
-func (db *_DatabaseServiceMockItemExists) Write(obj ...Authentication) error {
+func (db *_DatabaseServiceMockItemExists) Write(obj ...*Authentication) error {
 	return nil
 }
 
@@ -32,7 +32,7 @@ func (db *_DatabaseServiceMockGetError) Get(keyObj interface{}) (*Authentication
 	return nil, errors.New("ERROR")
 }
 
-func (db *_DatabaseServiceMockGetError) Write(obj ...Authentication) error {
+func (db *_DatabaseServiceMockGetError) Write(obj ...*Authentication) error {
 	return nil
 }
 
@@ -45,7 +45,7 @@ func (db *_DatabaseServiceMockWriteError) Get(keyObj interface{}) (*Authenticati
 	return nil, nil
 }
 
-func (db *_DatabaseServiceMockWriteError) Write(obj ...Authentication) error {
+func (db *_DatabaseServiceMockWriteError) Write(obj ...*Authentication) error {
 	return errors.New("ERROR")
 }
 
@@ -58,7 +58,7 @@ func (db *_DatabaseServiceMockItemNotFound) Get(keyObj interface{}) (*Authentica
 	return nil, nil
 }
 
-func (db *_DatabaseServiceMockItemNotFound) Write(obj ...Authentication) error {
+func (db *_DatabaseServiceMockItemNotFound) Write(obj ...*Authentication) error {
 	return nil
 }
 

@@ -29,7 +29,7 @@ func (db *_DatabaseServiceMockItemExists) Get(keyObj interface{}) (*Trip, error)
 	}, nil
 }
 
-func (db *_DatabaseServiceMockItemExists) Write(obj ...Trip) error {
+func (db *_DatabaseServiceMockItemExists) Write(obj ...*Trip) error {
 	return nil
 }
 
@@ -59,7 +59,7 @@ func (db *_DatabaseServiceMockItemNotFound) Get(keyObj interface{}) (*Trip, erro
 	return nil, nil
 }
 
-func (db *_DatabaseServiceMockItemNotFound) Write(obj ...Trip) error {
+func (db *_DatabaseServiceMockItemNotFound) Write(obj ...*Trip) error {
 	return nil
 }
 
@@ -72,7 +72,7 @@ func (db *_DatabaseServiceMockGetError) Get(keyObj interface{}) (*Trip, error) {
 	return nil, errors.New("ERROR")
 }
 
-func (db *_DatabaseServiceMockGetError) Write(obj ...Trip) error {
+func (db *_DatabaseServiceMockGetError) Write(obj ...*Trip) error {
 	return nil
 }
 
@@ -89,7 +89,7 @@ func (db *_DatabaseServiceMockWriteError) Get(keyObj interface{}) (*Trip, error)
 	return nil, nil
 }
 
-func (db *_DatabaseServiceMockWriteError) Write(obj ...Trip) error {
+func (db *_DatabaseServiceMockWriteError) Write(obj ...*Trip) error {
 	return errors.New("ERROR")
 }
 

@@ -23,12 +23,9 @@ func NewDatabaseService[T any](tableName string) Service[T] {
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 
-	region := os.Getenv("AWS_REGION")
-	endpoint := os.Getenv("DYNAMODB_ENDPOINT")
-
 	cfg := &aws.Config{
-		Region:   &region,
-		Endpoint: &endpoint,
+		Region:   aws.String(os.Getenv("AWS_REGION")),
+		Endpoint: aws.String(os.Getenv("DYNAMODB_ENDPOINT")),
 	}
 
 	// Create new DynamoDB client
@@ -39,7 +36,7 @@ func NewDatabaseService[T any](tableName string) Service[T] {
 // Service interface which contains database operations
 type Service[T any] interface {
 	Get(keyObj interface{}) (*T, error)
-	Write(obj ...T) error
+	Write(obj ...*T) error
 	Delete(obj interface{}) error
 	Query(filterObj interface{}, condition string) (*[]T, error)
 	QueryWithIndex(filterObj interface{}, condition string, filterExpr string, index string) (*[]T, error)
@@ -76,7 +73,7 @@ func (service *_Service[T]) Get(keyObj interface{}) (*T, error) {
 }
 
 // Write function to write data from database
-func (service *_Service[T]) Write(objs ...T) error {
+func (service *_Service[T]) Write(objs ...*T) error {
 	items := []*dynamodb.WriteRequest{}
 
 	for _, obj := range objs {
