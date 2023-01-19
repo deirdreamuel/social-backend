@@ -111,7 +111,7 @@ func (service *_Service) Signup(request SignupRequest) (*SignupReponse, *pkg.Err
 		return nil, &pkg.Error{Code: 503, Reason: "Internal Server Error"}
 	}
 
-	return &SignupReponse{Status: true}, nil
+	return &SignupReponse{Status: true, UserID: account.ID}, nil
 }
 
 // Refresh function to refresh access token

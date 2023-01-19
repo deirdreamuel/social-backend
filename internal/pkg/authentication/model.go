@@ -29,6 +29,7 @@ type SignupRequest struct {
 // SignupReponse object which is the response for Signup function
 type SignupReponse struct {
 	Status bool
+	UserID string
 }
 
 // Authentication object which is used to store in database

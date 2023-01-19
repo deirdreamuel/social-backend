@@ -17,7 +17,7 @@ func (s *Server) UploadProfilePicture() gin.HandlerFunc {
 		// Get UserID from JWT
 		claims, errauth := authentication.GetTokenClaims(c.Request)
 		if errauth != nil {
-			log.Printf("(hander.UploadProfilePicture) error: %s", errauth)
+			log.Printf("error(handler.UploadProfilePicture): %s", errauth)
 			response := map[string]any{
 				"status":  401,
 				"message": "Token expired",
@@ -29,7 +29,7 @@ func (s *Server) UploadProfilePicture() gin.HandlerFunc {
 		userID := ((*claims)["user_id"]).(string)
 
 		if err := s.profileService.UploadProfilePicture(userID, file); err != nil {
-			log.Printf("(hander.UploadProfilePicture) error: %s", err)
+			log.Printf("error(handler.UploadProfilePicture): %s", err)
 			response := map[string]any{
 				"status":  http.StatusBadRequest,
 				"message": "Bad Request",
@@ -54,7 +54,7 @@ func (s *Server) CreateProfile() gin.HandlerFunc {
 		// Get UserID from JWT
 		claims, errauth := authentication.GetTokenClaims(c.Request)
 		if errauth != nil {
-			log.Printf("(hander.CreateProfile) error: %s", errauth)
+			log.Printf("error(handler.CreateProfile): %s", errauth)
 			response := map[string]any{
 				"status":  401,
 				"message": "Token expired",
@@ -63,10 +63,10 @@ func (s *Server) CreateProfile() gin.HandlerFunc {
 			c.JSON(401, response)
 			return
 		}
-		userID := ((*claims)["user_id"]).(string)
+		request.UserID = ((*claims)["user_id"]).(string)
 
 		if err := c.Bind(&request); err != nil {
-			log.Printf("(hander.CreateProfile) error: %s", err)
+			log.Printf("(handler.CreateProfile) error: %s", err)
 			response := map[string]any{
 				"status":  http.StatusBadRequest,
 				"message": "Bad Request",
@@ -76,8 +76,8 @@ func (s *Server) CreateProfile() gin.HandlerFunc {
 			return
 		}
 
-		if err := s.profileService.PutProfile(userID, &request); err != nil {
-			log.Printf("(hander.CreateProfile) error: %v", err)
+		if err := s.profileService.PutProfile(&request); err != nil {
+			log.Printf("(handler.CreateProfile) error: %v", err)
 			response := map[string]any{
 				"status":  err.Code,
 				"message": err.Reason,
@@ -99,7 +99,7 @@ func (s *Server) GetMyProfile() gin.HandlerFunc {
 		// Get UserID from JWT
 		claims, errauth := authentication.GetTokenClaims(c.Request)
 		if errauth != nil {
-			log.Printf("(hander.GetProfile) error: %s", errauth)
+			log.Printf("(handler.GetProfile) error: %s", errauth)
 			response := map[string]any{
 				"status":  401,
 				"message": "Token expired",

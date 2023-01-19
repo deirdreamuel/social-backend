@@ -1,8 +1,11 @@
 package app
 
 import (
+	"log"
 	"net/http"
 	"speakeasy/internal/pkg/authentication"
+	"speakeasy/internal/pkg/profile"
+	"speakeasy/pkg"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,23 +18,16 @@ func (s *Server) Login() gin.HandlerFunc {
 		// read and validate request body
 		var request authentication.LoginRequest
 		if err := c.Bind(&request); err != nil {
-			response := map[string]any{
-				"status":  http.StatusBadRequest,
-				"message": "Bad Request",
-			}
-
-			c.JSON(http.StatusBadRequest, response)
+			LogAndSendErrorResponse(c, &pkg.Error{
+				Code:   http.StatusBadRequest,
+				Reason: "Bad Request",
+			})
 			return
 		}
 
 		login, err := s.authenticationService.Login(request)
 		if err != nil {
-			response := map[string]any{
-				"status":  err.Code,
-				"message": err.Reason,
-			}
-
-			c.JSON(err.Code, response)
+			LogAndSendErrorResponse(c, err)
 			return
 		}
 
@@ -44,26 +40,28 @@ func (s *Server) Signup() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Header("Content-Type", "application/json")
 
-		// read and validate request body
 		var request authentication.SignupRequest
 		if err := c.Bind(&request); err != nil {
-			response := map[string]any{
-				"status":  http.StatusBadRequest,
-				"message": "Bad Request",
-			}
-
-			c.JSON(http.StatusBadRequest, response)
+			LogAndSendErrorResponse(c, &pkg.Error{
+				Code:   http.StatusBadRequest,
+				Reason: "Bad Request",
+			})
 			return
 		}
 
 		signup, err := s.authenticationService.Signup(request)
 		if err != nil || !signup.Status {
-			response := map[string]any{
-				"status":  err.Code,
-				"message": err.Reason,
-			}
+			LogAndSendErrorResponse(c, err)
+			return
+		}
 
-			c.JSON(err.Code, response)
+		err = s.profileService.PutProfile(&profile.Profile{
+			UserID: signup.UserID,
+			Name:   request.Name,
+		})
+
+		if err != nil {
+			LogAndSendErrorResponse(c, err)
 			return
 		}
 
@@ -81,29 +79,34 @@ func (s *Server) Refresh() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Header("Content-Type", "application/json")
 
-		// read and validate request body
 		var request authentication.RefreshRequest
 		if err := c.Bind(&request); err != nil {
-			response := map[string]any{
-				"status":  http.StatusBadRequest,
-				"message": "Bad Request",
-			}
-
-			c.JSON(http.StatusBadRequest, response)
+			LogAndSendErrorResponse(c, &pkg.Error{
+				Code:   http.StatusBadRequest,
+				Reason: "Bad Request",
+			})
 			return
 		}
 
 		token, err := s.authenticationService.Refresh(&request)
 		if err != nil {
-			response := map[string]any{
-				"status":  http.StatusUnauthorized,
-				"message": "Unauthorized",
-			}
-
-			c.JSON(http.StatusUnauthorized, response)
+			LogAndSendErrorResponse(c, &pkg.Error{
+				Code:   http.StatusUnauthorized,
+				Reason: "Unauthorized",
+			})
 			return
 		}
 
 		c.JSON(http.StatusOK, token)
 	}
+}
+
+func LogAndSendErrorResponse(c *gin.Context, err *pkg.Error) {
+	log.Printf("(%s) error: Reason: %s, Code: %d", c.Request.URL, err.Reason, err.Code)
+	response := map[string]any{
+		"status":  err.Code,
+		"message": err.Reason,
+	}
+
+	c.JSON(err.Code, response)
 }

@@ -32,7 +32,7 @@ type _Service struct {
 }
 
 type Service interface {
-	PutProfile(userID string, profile *Profile) *pkg.Error
+	PutProfile(profile *Profile) *pkg.Error
 	GetProfile(id string) (*Profile, *pkg.Error)
 	UploadProfilePicture(userID string, file multipart.File) error
 }
@@ -46,12 +46,11 @@ func NewProfileService() Service {
 }
 
 // PutProfile function to configure db keys and update information.
-func (service *_Service) PutProfile(userID string, profile *Profile) *pkg.Error {
-	profile.PK = fmt.Sprintf(PROFILE_PK, userID)
+func (service *_Service) PutProfile(profile *Profile) *pkg.Error {
+	profile.PK = fmt.Sprintf(PROFILE_PK, profile.UserID)
 	profile.SK = PROFILE_SK
 
 	profile.UpdatedAt = time.Now().UTC()
-	profile.UserID = userID
 
 	err := service.db.Write(profile)
 	if err != nil {
@@ -77,7 +76,7 @@ func (service *_Service) GetProfile(userID string) (*Profile, *pkg.Error) {
 
 	if profile == nil {
 		log.Println("(GetProfile) error: item not found")
-		return nil, &pkg.Error{Code: 400, Reason: "Item not found"}
+		return &Profile{UserID: userID}, nil
 	}
 
 	removePrivateFieldsFromJSON(profile)
