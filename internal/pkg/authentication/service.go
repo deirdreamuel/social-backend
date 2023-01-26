@@ -193,7 +193,7 @@ func VerifyTokenString(tokenString string) (*jwt.Token, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(os.Getenv("JWT_SECRET")), nil
+		return []byte(os.Getenv("JWT_ACCESS_SECRET")), nil
 	})
 
 	if err != nil {
@@ -210,7 +210,7 @@ func VerifyToken(r *http.Request) (*jwt.Token, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(os.Getenv("JWT_SECRET")), nil
+		return []byte(os.Getenv("JWT_ACCESS_SECRET")), nil
 	})
 
 	if err != nil {
@@ -226,7 +226,7 @@ func GetTokenClaims(r *http.Request) (*jwt.MapClaims, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(os.Getenv("JWT_SECRET")), nil
+		return []byte(os.Getenv("JWT_ACCESS_SECRET")), nil
 	})
 
 	if err != nil {
