@@ -6,12 +6,12 @@ import "github.com/gin-gonic/gin"
 func (s *Server) Routes() *gin.Engine {
 	router := s.router
 
-	// health check endpoint
-	router.GET("/", s.HealthCheck())
-
 	// version 1 apis
 	v1 := router.Group("/v1")
 	{
+		// health check endpoint
+		router.GET("/health", s.HealthCheck())
+
 		auth := v1.Group("/auth")
 		{
 			auth.POST("signup", s.Signup())
